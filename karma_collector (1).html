@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KARMA COLLECTOR // KC3</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Metal+Mania&family=Space+Grotesk:wght@600;700;900&display=swap');
+  :root {
+    --bg: #020203;
+    --panel: rgba(10, 10, 13, .95);
+    --line: rgba(212, 212, 220, .24);
+    --text: #f4f4f6;
+    --muted: #8e8e98;
+    --chrome: #e4e4e7;
+    --silver: #a1a1aa;
+    --blood: #dc2626;
+    --bone: #f8fafc;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; color: var(--text);
+    font-family: 'Space Grotesk', Pretendard, "Noto Sans KR", system-ui, sans-serif;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, .07) 0%, transparent 48%),
+      radial-gradient(circle at 50% 100%, rgba(185, 28, 28, .12) 0%, transparent 50%),
+      #020203;
+    display: flex; justify-content: center; padding: 22px;
+  }
+  .app { width: min(1100px, 100%); }
+  header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:14px; }
+  .brand { display:flex; align-items:center; gap:14px; }
+  .logo {
+    width:54px; height:54px; border-radius:12px; display:grid; place-items:center;
+    background: linear-gradient(145deg, #18181b, #050507);
+    box-shadow: 0 0 22px rgba(255, 255, 255, .14), inset 0 1px 0 rgba(255,255,255,.35);
+    border: 1.5px solid #52525b;
+  }
+  h1 {
+    font-family: 'Metal Mania', 'Cinzel', serif;
+    font-size: clamp(24px, 3.8vw, 36px);
+    margin: 0;
+    letter-spacing: 3px;
+    background: linear-gradient(180deg, #ffffff 0%, #d4d4d8 42%, #52525b 56%, #f4f4f5 82%, #71717a 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 3px 12px rgba(255,255,255,.22));
+  }
+  .subtitle { color: #a1a1aa; font-size:11.5px; font-weight:700; margin-top:3px; letter-spacing: 1.2px; text-transform: uppercase; }
+  .header-actions { display:flex; gap:8px; }
+  button {
+    border:1px solid #3f3f46;
+    background: linear-gradient(180deg, #18181b, #09090b);
+    color: var(--bone);
+    border-radius:8px;
+    padding:10px 14px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.16s ease;
+    box-shadow: 0 4px 14px rgba(0,0,0,.75), inset 0 1px rgba(255,255,255,.15);
+  }
+  button:hover {
+    transform:translateY(-1.5px);
+    border-color: #e4e4e7;
+    background: linear-gradient(180deg, #27272a, #121215);
+    box-shadow: 0 0 16px rgba(255, 255, 255, .2);
+  }
+  button:active { transform:translateY(0); }
+  button.primary {
+    background: linear-gradient(180deg, #f4f4f5 0%, #a1a1aa 48%, #52525b 53%, #d4d4d8 100%);
+    border:1px solid #ffffff;
+    color:#09090b;
+    font-weight:900;
+    box-shadow: 0 6px 20px rgba(255, 255, 255, .22);
+  }
+  button.primary:hover {
+    background: linear-gradient(180deg, #ffffff 0%, #d4d4d8 48%, #71717a 53%, #f4f4f5 100%);
+    box-shadow: 0 0 24px rgba(255, 255, 255, .42);
+  }
+  button.danger { background:#3b0a0a; border-color:#991b1b; color:#fecaca; }
+  .stats { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:12px; }
+  .stat {
+    background: linear-gradient(180deg, #121215, #060608);
+    border:1px solid #27272a;
+    border-top: 1px solid #52525b;
+    border-radius:9px;
+    padding:11px 14px;
+    min-width:0;
+    box-shadow: inset 0 1px rgba(255,255,255,.07), 0 8px 20px rgba(0,0,0,.7);
+  }
+  .stat-label { color:#71717a; font-size:10.5px; font-weight:800; margin-bottom:4px; text-transform:uppercase; letter-spacing:1px; }
+  .stat-value { font-size:clamp(16px,2.8vw,22px); font-weight:900; letter-spacing:-.3px; white-space:nowrap; color:#fafafa; text-shadow: 0 0 10px rgba(255,255,255,.15); }
+  .stat-value small { font-size:11px; color:#a1a1aa; font-weight:700; }
+  .stage-wrap {
+    position:relative;
+    border:2px solid #3f3f46;
+    border-radius:12px;
+    padding:7px;
+    background: linear-gradient(145deg, #27272a, #09090b 50%, #18181b);
+    box-shadow: 0 25px 80px rgba(0,0,0,.95), inset 0 1px rgba(255,255,255,.25);
+  }
+  #stage { display:block; width:100%; height:min(62vh,590px); min-height:370px; border-radius:7px; background:#030304; }
+  .stage-top { position:absolute; top:17px; left:19px; right:19px; display:flex; justify-content:space-between; gap:10px; pointer-events:none; }
+  .pill {
+    font-size:11px; font-weight:800; color:#e4e4e7;
+    background: rgba(5, 5, 7, .9);
+    border:1px solid #52525b;
+    border-radius:5px;
+    padding:6px 12px;
+    backdrop-filter:blur(8px);
+    box-shadow: 0 4px 12px rgba(0,0,0,.8);
+    letter-spacing: .4px;
+  }
+  .slow-ready { color:#ffffff; border-color:#ffffff; box-shadow: 0 0 14px rgba(255, 255, 255, .45); }
+  .typing-row { display:flex; gap:10px; margin-top:12px; }
+  #wordInput {
+    min-width:0; flex:1;
+    border:1.5px solid #52525b;
+    outline:none;
+    background: #08080a;
+    border-radius:8px;
+    padding:14px 16px;
+    color:#ffffff;
+    font-size:16px;
+    font-weight:700;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,.9);
+  }
+  #wordInput:focus { border-color: #e4e4e7; box-shadow: 0 0 0 3px rgba(255, 255, 255, .14); }
+  #wordInput::placeholder { color:#52525b; font-weight:600; }
+  .input-hint { min-height:23px; color:#a1a1aa; font-size:12px; font-weight:600; padding:7px 4px 0; }
+  .bottom-grid { display:grid; grid-template-columns:1.15fr .85fr; gap:12px; margin-top:12px; }
+  .info-card {
+    border:1px solid #27272a;
+    background: rgba(9, 9, 12, .94);
+    border-radius:9px;
+    padding:14px 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.6);
+  }
+  .info-title { font-size:12px; font-weight:900; margin-bottom:6px; color: #f4f4f5; letter-spacing:.8px; text-transform:uppercase; }
+  .info-text { color:#a1a1aa; font-size:11.5px; line-height:1.75; }
+  .token { display:inline-block; border:1px solid #71717a; background:#18181b; color:#ffffff; padding:2px 7px; border-radius:4px; font-weight:800; }
+  .overlay { position:absolute; inset:7px; border-radius:7px; background:rgba(2, 2, 3, .91); backdrop-filter:blur(7px); display:flex; align-items:center; justify-content:center; padding:18px; z-index:5; }
+  .overlay.hidden { display:none; }
+  .dialog {
+    width:min(460px,100%);
+    border:1.5px solid #52525b;
+    border-radius:12px;
+    padding:26px;
+    background: linear-gradient(160deg, #141418, #050507 75%);
+    box-shadow: 0 24px 80px rgba(0,0,0,.95), 0 0 30px rgba(255, 255, 255, .08);
+    text-align:center;
+  }
+  .dialog .big { font-size:42px; margin-bottom:8px; }
+  .dialog h2 {
+    font-family: 'Metal Mania', 'Cinzel', serif;
+    letter-spacing: 2px;
+    font-size:28px;
+    margin:0 0 10px;
+    color:#ffffff;
+  }
+  .dialog p { color:#a1a1aa; font-size:13px; line-height:1.7; margin:0 0 18px; }
+  .dialog-actions { display:flex; justify-content:center; flex-wrap:wrap; gap:8px; }
+  .settings { text-align:left; width:min(720px,100%); max-height:calc(100% - 8px); overflow:auto; }
+  .settings label { display:block; font-size:12px; font-weight:800; margin-bottom:7px; color:#e4e4e7; }
+  #inputMode { width:100%; border:1px solid #52525b; border-radius:7px; background:#09090b; color:#f4f4f5; padding:11px; margin:0 0 12px; font-weight:700; }
+  #penaltyList { width:100%; min-height:150px; resize:vertical; border:1px solid #52525b; border-radius:7px; background:#09090b; color:#f4f4f5; padding:12px; font:13px/1.8 ui-monospace, SFMono-Regular, Consolas, monospace; outline:none; }
+  #penaltyList:focus { border-color: #ffffff; }
+  .settings-tools { display:flex; justify-content:flex-end; gap:8px; margin:9px 0 12px; flex-wrap:wrap; }
+  .settings-tools button { padding:8px 11px; font-size:11px; }
+  .parse-summary { color:#e4e4e7; background:#141418; border:1px solid #3f3f46; border-radius:7px; padding:9px 11px; font-size:11px; line-height:1.65; margin:8px 0; }
+  .entry-editor { display:grid; gap:7px; margin:9px 0 12px; }
+  .entry-row { display:grid; grid-template-columns:54px minmax(0,1fr) 76px auto auto; gap:7px; align-items:center; background:#101014; border:1px solid #27272a; border-radius:8px; padding:7px; }
+  .entry-thumb { width:54px; height:54px; border-radius:6px; background:#050507; border:1px solid #3f3f46; display:grid; place-items:center; overflow:hidden; color:#71717a; font-size:10px; text-align:center; }
+  .entry-thumb img { width:100%; height:100%; object-fit:cover; }
+  .entry-row input[type=text], .entry-row input[type=number] { width:100%; min-width:0; background:#050507; color:#f4f4f5; border:1px solid #3f3f46; border-radius:5px; padding:9px 7px; outline:none; }
+  .entry-row button { padding:8px 9px; font-size:10px; white-space:nowrap; }
+  .file-label { display:inline-flex; align-items:center; justify-content:center; border:1px solid #52525b; background:#18181b; color:#f4f4f5; border-radius:6px; padding:8px 9px; font-size:10px; font-weight:800; cursor:pointer; white-space:nowrap; }
+  .file-label input { display:none; }
+  .entry-empty { color:#71717a; border:1px dashed #3f3f46; border-radius:7px; padding:15px; font-size:11px; text-align:center; }
+  .settings-note { font-size:11px!important; color:#71717a!important; margin:8px 0 14px!important; text-align:left; line-height:1.65!important; }
+  @media (max-width:600px) { .entry-row { grid-template-columns:46px minmax(0,1fr) 66px; } .entry-thumb { width:46px;height:46px; } .entry-row .file-label,.entry-row button { grid-row:2; } .entry-row .file-label { grid-column:2; } .entry-row button { grid-column:3; } }
+  .toast { position:absolute; left:50%; bottom:82px; transform:translateX(-50%); border:1px solid #d4d4d8; background:rgba(5, 5, 7, .96); color:#ffffff; padding:9px 16px; border-radius:6px; font-size:12px; font-weight:800; pointer-events:none; opacity:0; transition:opacity .18s; white-space:nowrap; box-shadow: 0 0 20px rgba(255, 255, 255, .25); }
+  .toast.show { opacity:1; }
+  @media (max-width:700px) {
+    body { padding:12px; }
+    header { align-items:flex-start; }
+    .logo { width:44px; height:44px; border-radius:10px; }
+    .header-actions { flex-direction:column; }
+    .header-actions button { padding:8px 10px; font-size:11px; }
+    .stats { grid-template-columns:repeat(3,1fr); }
+    .stat { padding:8px 10px; }
+    #stage { height:54vh; min-height:330px; }
+    .bottom-grid { grid-template-columns:1fr; }
+    .typing-row button { padding:10px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo">
+        <!-- 앨범 커버 영감: 스컬 & 척추 크롬 엠블럼 -->
+        <svg width="34" height="34" viewBox="0 0 36 36" fill="none">
+          <defs>
+            <linearGradient id="chromeLogo" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#ffffff"/>
+              <stop offset="45%" stop-color="#a1a1aa"/>
+              <stop offset="55%" stop-color="#3f3f46"/>
+              <stop offset="100%" stop-color="#f4f4f5"/>
+            </linearGradient>
+          </defs>
+          <path d="M18 4C11.5 4 7 8.8 7 15C7 19.2 9.2 22.3 12 23.8V29H15V25H17V29H19V25H21V29H24V23.8C26.8 22.3 29 19.2 29 15C29 8.8 24.5 4 18 4ZM13.5 17.5C11.8 17.5 10.5 16.2 10.5 14.5C10.5 12.8 11.8 11.5 13.5 11.5C15.2 11.5 16.5 12.8 16.5 14.5C16.5 16.2 15.2 17.5 13.5 17.5ZM22.5 17.5C20.8 17.5 19.5 16.2 19.5 14.5C19.5 12.8 20.8 11.5 22.5 11.5C24.2 11.5 25.5 12.8 25.5 14.5C25.5 16.2 24.2 17.5 22.5 17.5Z" fill="url(#chromeLogo)"/>
+        </svg>
+      </div>
+      <div><h1>KARMA COLLECTOR</h1><div class="subtitle">CHROME SPINE EDITION // 타이핑 체인으로 업보를 수거하라</div></div>
+    </div>
+    <div class="header-actions">
+      <button id="settingsBtn">⚙ 교칙 · 괴물 설정</button>
+      <button id="pauseBtn">Ⅱ 일시정지</button>
+    </div>
+  </header>
+
+  <section class="stats">
+    <div class="stat"><div class="stat-label">KARMA SCORE</div><div class="stat-value" id="score">0 <small>점</small></div></div>
+    <div class="stat"><div class="stat-label">WAVE</div><div class="stat-value" id="wave">1</div></div>
+    <div class="stat"><div class="stat-label">COLLECTED</div><div class="stat-value" id="caught">0</div></div>
+    <div class="stat"><div class="stat-label">VITALITY</div><div class="stat-value" id="lives">♥ ♥ ♥</div></div>
+    <div class="stat"><div class="stat-label">SLOW CHARGE</div><div class="stat-value" id="charges">0 <small>/ 3</small></div></div>
+  </section>
+
+  <main class="stage-wrap">
+    <canvas id="stage" aria-label="KARMA COLLECTOR 게임 화면"></canvas>
+    <div class="stage-top"><span class="pill" id="waveInfo">WAVE 1 · 준비</span><span class="pill" id="slowInfo">스페이스바 두 번 · 퇴사 몬스터 포획 후 사용</span></div>
+    <div class="toast" id="toast"></div>
+    <div class="overlay" id="startOverlay">
+      <div class="dialog">
+        <div class="big">💀</div><h2>KARMA COLLECTOR</h2>
+        <p>초반에는 괴물이 천천히, 적은 수로 등장해요. 화면에는 최대 4마리까지 나타납니다.<br>괴물 위에 적힌 단어를 입력하고 <b>Enter</b>를 누르면 묵직한 크롬 체인이 날아가 포획해요.<br>띄어쓰기는 넣거나 생략해도 괜찮아요. <b>퇴사</b> 괴물은 슬로우 충전을 줍니다.</p>
+        <div class="dialog-actions"><button class="primary" id="startBtn">GAME START</button><button id="startSettingsBtn">교칙 · 괴물 설정</button></div>
+      </div>
+    </div>
+    <div class="overlay hidden" id="pauseOverlay">
+      <div class="dialog"><div class="big">⏸️</div><h2>PAUSED</h2><p>괴물들도 잠시 멈춰 있어요. 준비되면 다시 시작하세요.</p><div class="dialog-actions"><button class="primary" id="resumeBtn">계속하기</button></div></div>
+    </div>
+    <div class="overlay hidden" id="overOverlay">
+      <div class="dialog"><div class="big">☠️</div><h2>GAME OVER</h2><p id="finalStats">최종 점수: 0점</p><div class="dialog-actions"><button class="primary" id="restartBtn">다시 도전</button><button id="overSettingsBtn">교칙 · 괴물 설정</button></div></div>
+    </div>
+    <div class="overlay hidden" id="settingsOverlay">
+      <div class="dialog settings">
+        <h2>⚙ 교칙 · 괴물 커스텀</h2>
+        <p>교칙을 편한 형식으로 붙여넣고 분석하면 괴물 단어를 자동으로 뽑아요. 각 괴물에 직접 이미지를 등록할 수도 있어요.</p>
+        <label for="inputMode">입력 형식</label>
+        <select id="inputMode">
+          <option value="auto">자동 인식 · 문장/목록/이름|점수 섞어 쓰기</option>
+          <option value="sentences">교칙 문장 · 문장 속 키워드와 점수 추출</option>
+          <option value="keywords">키워드 목록 · 한 줄에 괴물 단어 하나</option>
+          <option value="pairs">이름 | 점수 · 직접 지정</option>
+        </select>
+        <label for="penaltyList">교칙 / 벌점 내용</label>
+        <textarea id="penaltyList" spellcheck="false" placeholder="예) 교복을 착용하지 않으면 벌점 3점
+수업 중 휴대전화를 사용하면 2점
+지각하면 벌점 1점
+퇴사 항목은 슬로우모션 충전"></textarea>
+        <div class="settings-tools"><button id="analyzeBtn" class="primary">교칙 분석 · 미리보기</button></div>
+        <div id="parseSummary" class="parse-summary">분석 버튼을 누르면 인식된 단어와 점수를 아래에 보여줍니다.</div>
+        <div id="entryEditor" class="entry-editor"><div class="entry-empty">분석된 괴물 항목이 여기에 표시됩니다.</div></div>
+        <p class="settings-note">지원 형식 예시:<br>• 문장: “교복을 착용하지 않으면 벌점 3점”, “지각 시 2점”, “휴대전화를 수업 중 사용하면 3점”<br>• 키워드: 한 줄에 `교복 미착용`, `지각`, `명찰`처럼 입력하면 기본 1점<br>• 직접 지정: `교복 미착용|-3` 또는 `지각|2` · 퇴사 항목은 `퇴사|특수`<br>이미지는 각 항목의 “이미지 넣기”로 추가하며, 이 브라우저에 저장됩니다. 이미지 파일은 자동으로 작게 압축됩니다. 점수는 포획 시 절댓값으로 더해집니다.</p>
+        <div class="dialog-actions"><button class="primary" id="saveSettingsBtn">저장하기</button><button id="cancelSettingsBtn">취소</button></div>
+      </div>
+    </div>
+  </main>
+
+  <div class="typing-row">
+    <input id="wordInput" type="text" autocomplete="off" autocapitalize="off" placeholder="괴물 위의 단어를 입력하고 Enter를 누르세요…" aria-label="괴물 단어 입력" disabled />
+    <button class="primary" id="clearBtn" title="입력 지우기">지우기</button>
+  </div>
+  <div class="input-hint" id="inputHint">게임을 시작하면 입력창이 활성화됩니다.</div>
+
+  <section class="bottom-grid">
+    <div class="info-card"><div class="info-title">🎯 조작 방법</div><div class="info-text">① 괴물 위에 표시된 단어를 입력한 뒤 <span class="token">Enter</span>를 누르면 체인을 발사합니다. 띄어쓰기는 넣거나 생략해도 됩니다.<br>② 벌점 숫자의 <b>절댓값</b>만큼 점수를 얻습니다. (예: -3 → +3점)<br>③ <span class="token">퇴사</span> 괴물을 잡아 충전을 모은 뒤, <span class="token">스페이스바 두 번</span>으로 잠깐 슬로우모션을 발동하세요.</div></div>
+    <div class="info-card"><div class="info-title">🌊 웨이브 규칙</div><div class="info-text">초반에는 괴물이 적고 천천히 다가옵니다. 30초마다 웨이브가 오르며 괴물의 이동 속도와 등장 빈도가 서서히 증가합니다. 괴물이 중앙 캐릭터에 닿으면 내구도가 1 감소합니다. 내구도가 0이 되면 게임이 끝납니다.</div></div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const canvas = $('stage');
+  const ctx = canvas.getContext('2d');
+  const input = $('wordInput');
+  const defaults = [
+    ['교복 미착용', -3], ['지각', -2], ['명찰 미착용', -1],
+    ['실내화 미착용', -2], ['휴대전화 사용', -3], ['복장 불량', -2],
+    ['청소 불량', -1], ['수업 태도 불량', -2], ['퇴사', '특수']
+  ];
+  const STORAGE_KEY = 'monsterTypingDefense.customEntries.v3';
+  function loadSavedEntries() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+      if (Array.isArray(saved) && saved.length) return saved.filter(e => e && typeof e.word === 'string' && e.word.trim()).map(e => ({ word:e.word.trim(), value:e.value === '특수' ? '특수' : (Number(e.value) || 0), imageData:typeof e.imageData === 'string' ? e.imageData : '' }));
+    } catch (err) { console.warn('저장된 교칙을 불러오지 못했습니다.', err); }
+    return defaults.map(([word, value]) => ({ word, value, imageData:'' }));
+  }
+  let entries = loadSavedEntries();
+  const imageCache = new Map();
+  function saveEntriesToBrowser() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); return true; }
+    catch (err) { console.warn('이미지/교칙 저장 공간이 부족합니다.', err); return false; }
+  }
+  function cachedImage(data) {
+    if (!data) return null;
+    if (!imageCache.has(data)) {
+      const img = new Image(); img.onload = () => { if (running) draw(); }; img.src = data;
+      imageCache.set(data, img);
+    }
+    const img = imageCache.get(data);
+    return img && img.complete && img.naturalWidth > 0 ? img : null;
+  }
+  let enemies = [], projectiles = [], particles = [], stars = [];
+  let running = false, paused = false, gameOver = false;
+  let score = 0, caught = 0, lives = 3, charges = 0, wave = 1;
+  let elapsed = 0, spawnTimer = 0, lastFrame = 0, slowTime = 0, lastSpace = 0;
+  let composing = false, toastTimer = 0, inputValueBefore = '';
+  let width = 800, height = 500, dpr = 1;
+  let settingsReturn = 'start';
+  const rand = (a,b) => Math.random() * (b-a) + a;
+  const center = () => ({ x: width/2, y: height/2 });
+
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    width = Math.max(320, rect.width); height = Math.max(320, rect.height);
+    canvas.width = Math.round(width*dpr); canvas.height = Math.round(height*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    stars = Array.from({length: Math.floor(width*height/5000)}, () => ({x:rand(0,width), y:rand(0,height), r:rand(.5,1.8), a:rand(.15,.65), p:rand(0,6.28)}));
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function showToast(message) {
+    $('toast').textContent = message;
+    $('toast').classList.add('show');
+    toastTimer = 1.7;
+  }
+  function updateHud() {
+    $('score').innerHTML = `${score} <small>점</small>`;
+    $('wave').textContent = wave;
+    $('caught').textContent = caught;
+    $('lives').textContent = `${'♥ '.repeat(lives)}${'♡ '.repeat(3-lives)}`.trim();
+    $('charges').innerHTML = `${charges} <small>/ 3</small>`;
+    $('waveInfo').textContent = `WAVE ${wave} · ${Math.max(0, Math.ceil(30 - (elapsed % 30)))}초 후 다음 웨이브`;
+    $('slowInfo').textContent = slowTime > 0 ? `슬로우모션 ${slowTime.toFixed(1)}초` : (charges > 0 ? `스페이스바 두 번 · 충전 ${charges}개` : '퇴사 몬스터를 잡아 슬로우 충전');
+    $('slowInfo').classList.toggle('slow-ready', charges > 0 || slowTime > 0);
+  }
+  function startGame() {
+    score=0; caught=0; lives=3; charges=0; wave=1; elapsed=0; spawnTimer=3.2; slowTime=0;
+    enemies=[]; projectiles=[]; particles=[]; paused=false; gameOver=false; running=true;
+    input.value=''; input.disabled=false;
+    $('startOverlay').classList.add('hidden'); $('pauseOverlay').classList.add('hidden'); $('overOverlay').classList.add('hidden');
+    $('pauseBtn').textContent='Ⅱ 일시정지';
+    $('inputHint').textContent='단어를 입력한 뒤 Enter를 누르면 체인이 발사됩니다. 띄어쓰기는 생략해도 돼요.';
+    updateHud(); input.focus(); lastFrame=performance.now(); requestAnimationFrame(loop);
+  }
+  function spawnEnemy() {
+    if (!entries.length) return;
+    const freshEntries = entries.filter(item => !enemies.some(e => e.word === item.word));
+    const pool = freshEntries.length ? freshEntries : entries;
+    const item = pool[Math.floor(Math.random()*pool.length)];
+    const side = Math.floor(Math.random()*4);
+    let x,y;
+    if (side===0) { x=rand(15,width-15); y=-35; }
+    else if (side===1) { x=width+35; y=rand(15,height-15); }
+    else if (side===2) { x=rand(15,width-15); y=height+35; }
+    else { x=-35; y=rand(15,height-15); }
+    const special = item.value === '특수' || item.word === '퇴사';
+    enemies.push({ id:Math.random().toString(36).slice(2), word:item.word, value:item.value, imageData:item.imageData || '', x,y,
+      r: special ? 27 : rand(25,30), speed:rand(.88,1.12), phase:rand(0,6.28), targeted:false, special });
+  }
+  function normalizeWord(value) { return String(value || '').replace(/\s+/g, ''); }
+  function closestMatching(prefix) {
+    const normalizedPrefix = normalizeWord(prefix);
+    if (!normalizedPrefix) return null;
+    const candidates = enemies.filter(e => !e.targeted && normalizeWord(e.word).startsWith(normalizedPrefix));
+    if (!candidates.length) return null;
+    const c = center();
+    candidates.sort((a,b) => Math.hypot(a.x-c.x,a.y-c.y)-Math.hypot(b.x-c.x,b.y-c.y));
+    return candidates[0];
+  }
+  function handleInput() {
+    if (!running || paused || gameOver || composing) return;
+    const val = input.value;
+    if (!normalizeWord(val)) {
+      $('inputHint').textContent = '괴물 이름을 입력한 뒤 Enter를 누르세요.';
+      return;
+    }
+    const target = closestMatching(val);
+    if (target) {
+      $('inputHint').textContent = `입력 중: ${val} · 목표 괴물 ${target.word} · Enter로 발사`;
+    } else {
+      $('inputHint').textContent = '일치하는 괴물이 없어요. 단어를 확인하거나 지우기를 눌러주세요.';
+    }
+  }
+  function launchTypedTarget() {
+    if (!running || paused || gameOver || composing) return;
+    const typed = normalizeWord(input.value);
+    if (!typed) return;
+    const c = center();
+    const exact = enemies.filter(e => !e.targeted && normalizeWord(e.word) === typed);
+    exact.sort((a,b) => Math.hypot(a.x-c.x,a.y-c.y)-Math.hypot(b.x-c.x,b.y-c.y));
+    const target = exact[0];
+    if (!target) {
+      const partial = closestMatching(input.value);
+      $('inputHint').textContent = partial
+        ? `아직 덜 입력했어요: ${partial.word} · 띄어쓰기는 생략해도 됩니다.`
+        : '일치하는 괴물이 없어요. 단어를 확인하고 다시 입력하세요.';
+      return;
+    }
+    target.targeted = true;
+    projectiles.push({ target, t:0, duration:.24 });
+    input.value='';
+    $('inputHint').textContent = `${target.word} · 체인 발사!`;
+    input.focus();
+  }
+  input.addEventListener('input', handleInput);
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      launchTypedTarget();
+    }
+  });
+  input.addEventListener('compositionstart', () => composing=true);
+  input.addEventListener('compositionend', () => { composing=false; handleInput(); });
+  $('clearBtn').addEventListener('click', () => { input.value=''; input.focus(); $('inputHint').textContent='입력을 지웠습니다.'; });
+
+  function activateSlow() {
+    if (!running || paused || gameOver) return;
+    if (charges <= 0) { showToast('퇴사 괴물을 잡아 슬로우 충전을 모으세요!'); return; }
+    if (slowTime > 0) { showToast('이미 슬로우모션이 발동 중이에요.'); return; }
+    charges--; slowTime=4.5; showToast('⏳ 슬로우모션 발동!'); updateHud();
+  }
+  window.addEventListener('keydown', (event) => {
+    if (event.code !== 'Space') { if (!event.repeat) lastSpace = 0; return; }
+    if (event.repeat) return;
+    if (!running || paused || gameOver) return;
+    const now = performance.now();
+    if (now-lastSpace < 330) {
+      event.preventDefault();
+      input.value = input.value.replace(/\s+$/, '');
+      activateSlow(); lastSpace=0;
+    } else {
+      lastSpace=now;
+    }
+  });
+
+  function capture(enemy) {
+    const idx = enemies.indexOf(enemy);
+    if (idx < 0) return;
+    enemies.splice(idx,1); caught++;
+    const c = center();
+    for(let i=0;i<18;i++) particles.push({x:enemy.x,y:enemy.y,vx:rand(-130,130),vy:rand(-130,130),life:rand(.35,.75),max:.75,r:rand(2,4),kind:enemy.special?'gold':'cyan'});
+    if (enemy.special) {
+      charges=Math.min(3,charges+1);
+      showToast('✨ 퇴사 포획! 슬로우 충전 +1');
+    } else {
+      const points=Math.abs(Number(enemy.value)||0);
+      score+=points;
+      showToast(`${enemy.word} 포획! +${points}점`);
+    }
+    updateHud();
+  }
+  function loseLife(enemy) {
+    const idx=enemies.indexOf(enemy); if(idx>=0) enemies.splice(idx,1);
+    lives=Math.max(0,lives-1); updateHud();
+    showToast('코어에 괴물이 닿았어요! 내구도 -1');
+    const c=center();
+    for(let i=0;i<22;i++) particles.push({x:c.x,y:c.y,vx:rand(-180,180),vy:rand(-180,180),life:rand(.3,.7),max:.7,r:rand(2,5),kind:'red'});
+    if(lives<=0) endGame();
+  }
+  function endGame() {
+    running=false; gameOver=true; input.disabled=true;
+    $('finalStats').textContent=`최종 점수 ${score}점 · 포획 ${caught}마리 · ${wave}웨이브 도달`;
+    $('overOverlay').classList.remove('hidden');
+  }
+  function togglePause() {
+    if (!running || gameOver) return;
+    paused=!paused;
+    $('pauseOverlay').classList.toggle('hidden',!paused);
+    $('pauseBtn').textContent=paused?'▶ 계속하기':'Ⅱ 일시정지';
+    if (!paused) { lastFrame=performance.now(); requestAnimationFrame(loop); }
+    else input.blur();
+  }
+
+  function update(dt) {
+    elapsed+=dt;
+    wave=Math.floor(elapsed/30)+1;
+    if (slowTime>0) slowTime=Math.max(0,slowTime-dt);
+    const slowFactor=slowTime>0?.34:1;
+    const spawnInterval=Math.max(5.0,8.2-(wave-1)*.24-elapsed*.0015);
+    spawnTimer-=dt;
+    if(spawnTimer<=0 && enemies.length<4) { spawnEnemy(); spawnTimer=spawnInterval*rand(.92,1.12); }
+    const c=center();
+    for(const e of [...enemies]) {
+      const dx=c.x-e.x, dy=c.y-e.y, dist=Math.hypot(dx,dy)||1;
+      const speed=(17+(wave-1)*3.0+elapsed*.12)*e.speed*slowFactor;
+      e.x+=(dx/dist)*speed*dt; e.y+=(dy/dist)*speed*dt; e.phase+=dt*3;
+      if(dist<49 && !e.targeted) loseLife(e);
+    }
+    for(const p of [...projectiles]) {
+      p.t+=dt/p.duration;
+      if(p.t>=1) { capture(p.target); projectiles.splice(projectiles.indexOf(p),1); }
+    }
+    for(const p of [...particles]) {
+      p.x+=p.vx*dt; p.y+=p.vy*dt; p.vx*=Math.pow(.03,dt); p.vy*=Math.pow(.03,dt); p.life-=dt;
+      if(p.life<=0) particles.splice(particles.indexOf(p),1);
+    }
+    if(toastTimer>0) { toastTimer-=dt; if(toastTimer<=0) $('toast').classList.remove('show'); }
+    updateHud();
+  }
+
+  function roundedRect(c,x,y,w,h,r) {
+    c.beginPath(); c.roundRect(x,y,w,h,r);
+  }
+
+  // 앨범 커버(KC3) 감성의 다크 옵시디언 & 리퀴드 크롬 배경
+  function drawChromeAlbumBackground() {
+    // 1. 딥 블랙 옵시디언 베이스
+    const bgGrad = ctx.createRadialGradient(width * 0.5, height * 0.45, 20, width * 0.5, height * 0.5, Math.max(width, height) * 0.78);
+    bgGrad.addColorStop(0, '#141418');
+    bgGrad.addColorStop(0.55, '#070709');
+    bgGrad.addColorStop(1, '#010102');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, width, height);
+
+    // 2. 배경에 은은하게 각인된 리퀴드 크롬 / 척추 뼈 질감의 'KC3' 대형 워터마크
+    ctx.save();
+    ctx.translate(width * 0.5, height * 0.5);
+    const scale = Math.min(width / 520, height / 380);
+    ctx.scale(scale, scale);
+
+    // 은빛 메탈 워터마크 그라데이션
+    const wmGrad = ctx.createLinearGradient(0, -130, 0, 130);
+    wmGrad.addColorStop(0, 'rgba(255, 255, 255, 0.085)');
+    wmGrad.addColorStop(0.35, 'rgba(161, 161, 170, 0.03)');
+    wmGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.09)');
+    wmGrad.addColorStop(0.8, 'rgba(82, 82, 91, 0.03)');
+    wmGrad.addColorStop(1, 'rgba(255, 255, 255, 0.07)');
+
+    ctx.font = '900 185px "Metal Mania", "Cinzel", serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = wmGrad;
+    ctx.fillText('KC3', 0, 8);
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+    ctx.lineWidth = 2;
+    ctx.strokeText('KC3', 0, 8);
+    ctx.restore();
+
+    // 3. 상단과 하단의 메탈릭 핀스트라이프 & 언더그라운드 콘크리트/메쉬 디테일
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.045)';
+    ctx.lineWidth = 1;
+    for (let x = 36; x < width; x += 72) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, height);
+      ctx.stroke();
+    }
+    for (let y = 36; y < height; y += 72) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
+    }
+
+    // 날카로운 크롬 가시/스파이크 프레임 코너 장식 (앨범 아트의 뾰족한 본/스파이크 느낌)
+    ctx.save();
+    const spikeGrad = ctx.createLinearGradient(0, 0, 90, 90);
+    spikeGrad.addColorStop(0, '#ffffff');
+    spikeGrad.addColorStop(0.5, '#71717a');
+    spikeGrad.addColorStop(1, '#18181b');
+    ctx.fillStyle = spikeGrad;
+    ctx.globalAlpha = 0.45;
+
+    // 좌상단 크롬 발톱/가시
+    ctx.beginPath();
+    ctx.moveTo(0, 0); ctx.lineTo(75, 0); ctx.quadraticCurveTo(28, 14, 0, 75); ctx.closePath(); ctx.fill();
+    // 우상단 크롬 발톱/가시
+    ctx.beginPath();
+    ctx.moveTo(width, 0); ctx.lineTo(width - 75, 0); ctx.quadraticCurveTo(width - 28, 14, width, 75); ctx.closePath(); ctx.fill();
+    // 좌하단 크롬 발톱/가시
+    ctx.beginPath();
+    ctx.moveTo(0, height); ctx.lineTo(75, height); ctx.quadraticCurveTo(28, height - 14, 0, height - 75); ctx.closePath(); ctx.fill();
+    // 우하단 크롬 발톱/가시
+    ctx.beginPath();
+    ctx.moveTo(width, height); ctx.lineTo(width - 75, height); ctx.quadraticCurveTo(width - 28, height - 14, width, height - 75); ctx.closePath(); ctx.fill();
+    ctx.restore();
+
+    // 깊은 비네트
+    const vignette = ctx.createRadialGradient(width * 0.5, height * 0.5, Math.min(width, height) * 0.22, width * 0.5, height * 0.5, Math.max(width, height) * 0.75);
+    vignette.addColorStop(0, 'rgba(0,0,0,0)');
+    vignette.addColorStop(1, 'rgba(0,0,0,0.78)');
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, 0, width, height);
+  }
+
+  // 앨범 아트의 리퀴드 크롬 & 척추 뼈 질감을 반영한 두껍고 광택 나는 실버/크롬 체인
+  function drawHeavyChromeChain(x1, y1, x2, y2) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 4) return;
+    const angle = Math.atan2(dy, dx);
+
+    ctx.save();
+    ctx.translate(x1, y1);
+    ctx.rotate(angle);
+
+    // 차갑고 강렬한 실버/화이트 크롬 글로우
+    ctx.shadowColor = 'rgba(255, 255, 255, 0.65)';
+    ctx.shadowBlur = 14;
+
+    const linkSpacing = 15;
+    const linkW = 21;
+    const linkH = 12;
+    const count = Math.max(1, Math.floor(dist / linkSpacing));
+
+    for (let i = 0; i <= count; i++) {
+      const lx = i * linkSpacing;
+      if (lx > dist + 4) break;
+      const isVertical = i % 2 === 1;
+
+      ctx.save();
+      ctx.translate(lx, 0);
+
+      if (!isVertical) {
+        // 리퀴드 크롬 고리 (고대비 블랙 & 화이트/실버 메탈릭 그라데이션)
+        const chromeGrad = ctx.createLinearGradient(0, -linkH / 2, 0, linkH / 2);
+        chromeGrad.addColorStop(0, '#ffffff');
+        chromeGrad.addColorStop(0.28, '#e4e4e7');
+        chromeGrad.addColorStop(0.5, '#18181b'); // 리퀴드 크롬 특유의 어두운 반사 밴드
+        chromeGrad.addColorStop(0.75, '#f4f4f5');
+        chromeGrad.addColorStop(1, '#52525b');
+
+        // 묵직한 블랙 아웃라인
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 6.8;
+        ctx.beginPath();
+        ctx.roundRect(-linkW / 2, -linkH / 2, linkW, linkH, 6);
+        ctx.stroke();
+
+        // 메인 크롬 메탈 링
+        ctx.strokeStyle = chromeGrad;
+        ctx.lineWidth = 4.2;
+        ctx.beginPath();
+        ctx.roundRect(-linkW / 2, -linkH / 2, linkW, linkH, 6);
+        ctx.stroke();
+
+        // 날카로운 순백색 반사광
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.moveTo(-linkW / 2 + 4, -linkH / 2 + 0.5);
+        ctx.lineTo(linkW / 2 - 4, -linkH / 2 + 0.5);
+        ctx.stroke();
+      } else {
+        // 세로로 맞물린 크롬 조인트 링크
+        const vGrad = ctx.createLinearGradient(-8, -3.5, 8, 3.5);
+        vGrad.addColorStop(0, '#27272a');
+        vGrad.addColorStop(0.35, '#ffffff');
+        vGrad.addColorStop(0.65, '#71717a');
+        vGrad.addColorStop(1, '#e4e4e7');
+
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.roundRect(-8.5, -4, 17, 8, 4);
+        ctx.fill();
+
+        ctx.fillStyle = vGrad;
+        ctx.beginPath();
+        ctx.roundRect(-7.5, -2.8, 15, 5.6, 2.8);
+        ctx.fill();
+
+        // 하이라이트 점광
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.ellipse(-1.5, -1, 3.5, 1.1, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    // 체인 끝부분의 날카로운 스파이크 클로(발톱) 갈고리 (앨범 커버 끝단의 날카로운 뼈/발톱 모티브)
+    ctx.translate(dist, 0);
+    const clawGrad = ctx.createLinearGradient(-4, -9, 10, 9);
+    clawGrad.addColorStop(0, '#ffffff');
+    clawGrad.addColorStop(0.5, '#71717a');
+    clawGrad.addColorStop(1, '#18181b');
+
+    ctx.fillStyle = clawGrad;
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-4, -6);
+    ctx.quadraticCurveTo(6, -10, 12, -2);
+    ctx.quadraticCurveTo(4, -3, 1, 0);
+    ctx.quadraticCurveTo(4, 3, 12, 2);
+    ctx.quadraticCurveTo(6, 10, -4, 6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  // 앨범 컨셉(다크 힙합/오피움/메탈 스트릿)에 맞춰 스타일링한 중앙 픽셀 캐릭터
+  function drawHipPixelCharacter(cx, cy) {
+    ctx.save();
+    // 발밑 크롬 & 블러드 레드 펄스 링
+    const pulseR = 38 + Math.sin(elapsed * 4) * 2.5;
+    ctx.strokeStyle = 'rgba(244, 244, 246, 0.75)';
+    ctx.lineWidth = 2.2;
+    ctx.shadowColor = '#ffffff';
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.arc(cx, cy, pulseR, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(220, 38, 38, 0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, pulseR + 7, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // 16x16 힙한 다크 스트릿 픽셀 캐릭터 (블랙 비니 + 크롬 고글 선글라스 + 레더/후디 자켓 + 두꺼운 실버 체인 + 배기 팬츠)
+    const p = 3.5;
+    const ox = Math.round(cx - 8 * p);
+    const bob = Math.round(Math.sin(elapsed * 6) * 2);
+    const oy = Math.round(cy - 8 * p + bob);
+
+    const palette = {
+      'B': '#18181b', // 다크 블랙 비니
+      'b': '#e4e4e7', // 비니 실버 크롬 자수 포인트
+      'H': '#09090b', // 제트 블랙 헤어
+      'S': '#f3d2b3', // 피부톤
+      's': '#d4a373', // 피부 음영
+      'G': '#000000', // 블랙 프레임 선글라스
+      'L': '#ffffff', // 실버 미러 선글라스 반사광
+      'l': '#a1a1aa', // 선글라스 메탈 음영
+      'J': '#121215', // 오버핏 블랙 레더/바시티 자켓
+      'j': '#27272a', // 자켓 소매 하이라이트
+      'W': '#09090b', // 올블랙 이너 티셔츠
+      'C': '#f4f4f5', // 두꺼운 리퀴드 크롬 체인 목걸이
+      'c': '#71717a', // 체인 메탈 음영
+      'P': '#18181b', // 와이드 블랙 카고 팬츠
+      'p': '#3f3f46', // 팬츠 스트랩/디테일
+      'K': '#e4e4e7', // 청키 실버/화이트 스니커즈
+      'w': '#52525b'  // 스니커즈 아웃솔
+    };
+
+    const sprite = [
+      "....BBBBBBBB....",
+      "...BBBBbBBBBB...",
+      "...HHHHHHHHHH...",
+      "...HSSSSSSSSs...",
+      "..GGGGGGGGGGGG..",
+      "..GLlGGGGGLlGG..",
+      "...SSSSSSSSSs...",
+      "..jjJJWWWWJJjj..",
+      ".jjJJJcCCcJJJjj.",
+      ".jjJJJJCCJJJJjj.",
+      ".SSJJJJWWJJJJSS.",
+      "...PPPPPPPPPP...",
+      "...PpPP..PPpP...",
+      "...PPPP..PPPP...",
+      "..KKKK....KKKK..",
+      "..wwww....wwww.."
+    ];
+
+    // 그림자
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 29, 22, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    for (let r = 0; r < sprite.length; r++) {
+      const row = sprite[r];
+      for (let col = 0; col < row.length; col++) {
+        const ch = row[col];
+        if (ch === '.') continue;
+        ctx.fillStyle = palette[ch] || '#fff';
+        ctx.fillRect(ox + col * p, oy + r * p, Math.ceil(p), Math.ceil(p));
+      }
+    }
+
+    ctx.restore();
+  }
+
+  function draw() {
+    ctx.clearRect(0,0,width,height);
+    drawChromeAlbumBackground();
+    const c=center();
+
+    // 중앙 가이드 링 (크롬 실버 점선)
+    ctx.save();
+    ctx.strokeStyle='rgba(228, 228, 231, .24)'; ctx.setLineDash([8,8]); ctx.lineWidth=1.8;
+    ctx.beginPath(); ctx.arc(c.x,c.y,86,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle='rgba(161, 161, 170, .12)'; ctx.beginPath();ctx.arc(c.x,c.y,118,0,Math.PI*2);ctx.stroke();
+    ctx.restore();
+
+    // 발사 중인 두껍고 광나는 크롬 체인
+    for(const p of projectiles) {
+      const e=p.target;
+      const ratio = Math.min(1, p.t * 1.16);
+      const tx=c.x+(e.x-c.x)*ratio, ty=c.y+(e.y-c.y)*ratio;
+      drawHeavyChromeChain(c.x, c.y, tx, ty);
+    }
+
+    // 괴물 및 크롬/블러드 이름표
+    const typed=input.value;
+    const highlight=closestMatching(typed);
+    for(const e of enemies) {
+      const pulse=1+Math.sin(e.phase)*.045, r=e.r*pulse;
+      ctx.save();
+      if(e===highlight){
+        ctx.strokeStyle='#ffffff';ctx.lineWidth=3;ctx.shadowColor='#ffffff';ctx.shadowBlur=15;
+        ctx.beginPath();ctx.arc(e.x,e.y,r+8,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;
+      }
+      const grad=ctx.createRadialGradient(e.x-r*.38,e.y-r*.42,2,e.x,e.y,r*1.22);
+      if(e.special){
+        // 특수(퇴사) 몬스터: 리퀴드 실버 크롬 코어
+        grad.addColorStop(0,'#ffffff');
+        grad.addColorStop(.45,'#a1a1aa');
+        grad.addColorStop(1,'#18181b');
+      } else {
+        // 일반 벌점 몬스터: 다크 크림슨 & 옵시디언 메탈릭
+        grad.addColorStop(0,'#ef4444');
+        grad.addColorStop(.45,'#7f1d1d');
+        grad.addColorStop(1,'#09090b');
+      }
+      ctx.save();ctx.beginPath();ctx.arc(e.x,e.y,r,0,Math.PI*2);ctx.clip();
+      const customImg=cachedImage(e.imageData);
+      if(customImg) {
+        const iw=customImg.naturalWidth, ih=customImg.naturalHeight;
+        const scale=Math.max((r*2)/iw,(r*2)/ih);
+        const dw=iw*scale, dh=ih*scale;
+        ctx.drawImage(customImg,e.x-dw/2,e.y-dh/2,dw,dh);
+        ctx.fillStyle='rgba(5,5,8,.14)';ctx.fillRect(e.x-r,e.y-r,r*2,r*2);
+      } else {
+        ctx.fillStyle=grad;ctx.fillRect(e.x-r,e.y-r,r*2,r*2);
+      }
+      ctx.restore();
+      ctx.shadowColor='#000';ctx.shadowBlur=10;ctx.shadowOffsetY=3;
+      ctx.strokeStyle=e.special?'#ffffff':'#dc2626';ctx.globalAlpha=.92;ctx.lineWidth=2;ctx.beginPath();ctx.arc(e.x,e.y,r,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+
+      const label=e.word; ctx.font='800 12px "Space Grotesk", Pretendard, sans-serif';
+      const tw=ctx.measureText(label).width, boxW=Math.max(58,tw+20), boxH=26, lx=e.x-boxW/2, ly=e.y-r-35;
+      roundedRect(ctx,lx,ly,boxW,boxH,5);ctx.fillStyle=e.special?'rgba(24, 24, 27, .97)':'rgba(9, 9, 11, .97)';ctx.fill();
+      ctx.strokeStyle=e.special?'#ffffff':'#71717a';ctx.lineWidth=1.5;ctx.stroke();
+      ctx.fillStyle=e.special?'#ffffff':'#f4f4f5';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,e.x,ly+boxH/2);
+      ctx.restore();
+    }
+
+    // 가운데 힙한 다크 스트릿 픽셀 캐릭터
+    drawHipPixelCharacter(c.x, c.y);
+
+    // 파티클 (실버 크롬 & 블러드 스파크)
+    for(const p of particles){
+      ctx.globalAlpha=Math.max(0,p.life/p.max);
+      ctx.fillStyle=p.kind==='gold'?'#ffffff':p.kind==='red'?'#dc2626':'#d4d4d8';
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();
+    }
+    ctx.globalAlpha=1;
+    if(slowTime>0){ctx.fillStyle='rgba(255, 255, 255, .06)';ctx.fillRect(0,0,width,height);}
+  }
+  function loop(now) {
+    if(!running || paused || gameOver) return;
+    const dt=Math.min(.04,Math.max(0,(now-lastFrame)/1000)); lastFrame=now;
+    update(dt); draw();
+    if(running && !paused && !gameOver) requestAnimationFrame(loop);
+  }
+
+  function openSettings(from) {
+    settingsReturn=from;
+    $('inputMode').value='auto';
+    $('penaltyList').value=entries.map(e=>`${e.word}|${e.value}`).join('\n');
+    const startingItems=entries.map(e=>({...e}));
+    renderEntryEditor(startingItems); $('entryEditor')._items=startingItems;
+    $('entryEditor').dataset.sourceText=$('penaltyList').value;
+    $('entryEditor').dataset.sourceMode=$('inputMode').value;
+    $('parseSummary').textContent=`현재 ${entries.length}개 항목이 등록되어 있어요. 문장이나 다른 형식으로 바꾼 뒤 “교칙 분석 · 미리보기”를 누르세요.`;
+    $('settingsOverlay').classList.remove('hidden');
+    if(running && !paused) { paused=true; $('pauseOverlay').classList.add('hidden'); }
+  }
+  function closeSettings() {
+    $('settingsOverlay').classList.add('hidden');
+    if(settingsReturn==='game' && running && !gameOver){paused=false;lastFrame=performance.now();requestAnimationFrame(loop);}
+    else if(settingsReturn==='start') $('startOverlay').classList.remove('hidden');
+    else if(settingsReturn==='over') $('overOverlay').classList.remove('hidden');
+  }
+
+  function splitRuleChunks(text) {
+    const lines=String(text||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+    const chunks=[];
+    for(const line of lines) {
+      const sentenceParts=line.split(/(?<=[.!?。！？;；])\s*/u).map(x=>x.trim()).filter(Boolean);
+      for(const sentence of sentenceParts) {
+        const commaParts=sentence.split(/[,，]/).map(x=>x.trim()).filter(Boolean);
+        if(commaParts.length>1 && commaParts.every(x=>/\d+\s*점|벌점|퇴사/.test(x))) chunks.push(...commaParts);
+        else chunks.push(sentence);
+      }
+    }
+    return chunks;
+  }
+  function extractRuleScore(sentence) {
+    if(/퇴사/.test(sentence)) return '특수';
+    const explicit=[...sentence.matchAll(/(?:벌점|감점|점수)\s*(?:은|는|이|가|을|를)?\s*(-?\d+)\s*점?/g)];
+    let n;
+    if(explicit.length) n=Number(explicit[explicit.length-1][1]);
+    else {
+      const pointMatches=[...sentence.matchAll(/(-?\d+)\s*점/g)];
+      if(pointMatches.length) n=Number(pointMatches[pointMatches.length-1][1]);
+      else {
+        const bare=[...sentence.matchAll(/(?:벌점|감점)\s*(-?\d+)(?!\s*회)/g)];
+        if(bare.length) n=Number(bare[bare.length-1][1]);
+      }
+    }
+    return Number.isFinite(n) ? -Math.abs(n) : -1;
+  }
+  function extractRuleWord(sentence) {
+    let t=String(sentence||'').replace(/^\s*(?:[-•*·]|\d+[.)、])\s*/,'').replace(/[“”"'‘’()\[\]{}]/g,' ').replace(/\s+/g,' ').trim();
+    if(/퇴사/.test(t)) return '퇴사';
+    const isNegated=/(?:하지\s*않|안\s*하|못\s*하|미착용|미지참|미준수|착용하지)/.test(t);
+    if(isNegated && /교복/.test(t)) return '교복 미착용';
+    if(isNegated && /명찰/.test(t)) return '명찰 미착용';
+    if(isNegated && /실내화/.test(t)) return '실내화 미착용';
+    if(/교복/.test(t) && /복장/.test(t) && /(불량|규정 위반)/.test(t)) return '복장 불량';
+    if(/휴대전화|휴대폰|핸드폰/.test(t)) {
+      if(/사용|확인|조작/.test(t)) return '휴대전화 사용';
+      if(/소지|가지고|반입/.test(t)) return '휴대전화 소지';
+    }
+    if(/지각/.test(t)) return '지각';
+    if(/명찰/.test(t) && /(미착용|착용하지|안 달|달지 않)/.test(t)) return '명찰 미착용';
+    if(/실내화/.test(t) && /(미착용|신지 않|착용하지|안 신)/.test(t)) return '실내화 미착용';
+    if(/청소/.test(t)) return '청소 불량';
+    if(/수업.{0,5}태도|태도.{0,5}불량/.test(t)) return '수업 태도 불량';
+    if(/복장/.test(t) && /불량/.test(t)) return '복장 불량';
+
+    t=t.replace(/(?:벌점|감점|점수)\s*(?:은|는|이|가|을|를)?\s*-?\d+\s*점?/g,' ')
+       .replace(/-?\d+\s*점/g,' ')
+       .replace(/(?:벌점|감점|점수|부과|처리|대상|학생|경우|상황|규정에 따라|규정 위반|위반 시|적발 시|해당 시|해야 합니다|해야 한다|해야 함|하면 안 됩니다|하면 안 된다|할 경우|하는 경우|했을 경우|했을 때|하는 때|시에는|시|중에는|중에|교내에서|수업 중|학교에서|반드시|다음과 같이)/g,' ')
+       .replace(/([가-힣]{2,})(은|는|이|가|을|를|에|에서|으로|로|와|과|도|만)(?=\s|$)/g,'$1')
+       .replace(/(?:하지\s*않으면|하지\s*않을\s*경우|안\s*하면|하지\s*않고|하면|할\s*때|할\s*경우|하는\s*경우|시에는|입니다|합니다|한다|된다|하여야|해야|하도록)$/g,' ')
+       .replace(/[.,!?。！？:：;；]/g,' ')
+       .replace(/\s+/g,' ').trim();
+    const stop=new Set(['학생','위반','금지','부과','발생','해당','경우','상황','규칙','규정','준수','관련','시행','한다','해야','않음','안됨','불가','학교','교내','수업','동안','때문']);
+    let words=t.split(' ').map(x=>x.trim()).filter(x=>x.length>=2 && !stop.has(x));
+    if(!words.length) {
+      const fallback=String(sentence).match(/[가-힣]{2,}/g)||[];
+      words=fallback.filter(x=>!stop.has(x) && !['벌점','점수','감점','학생','경우','규정'].includes(x));
+    }
+    return words.slice(0,3).join(' ').slice(0,18) || '교칙 위반';
+  }
+  function parsePenaltyText() {
+    const text=$('penaltyList').value;
+    const mode=$('inputMode').value;
+    const previous=new Map([...entries,...($('entryEditor')._items || [])].map(e=>[e.word,e]));
+    const parsed=[];
+    const add=(word,value)=>{
+      word=String(word||'').trim();
+      if(!word) return;
+      const old=previous.get(word);
+      if(parsed.some(e=>e.word===word)) return;
+      parsed.push({word,value:value==='특수'||word==='퇴사'?'특수':(Number(value)||0),imageData:old?.imageData||''});
+    };
+    const lines=text.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+    if(mode==='pairs') {
+      for(const line of lines) {
+        const [word,...rest]=line.split('|');
+        if(!rest.length) throw new Error(`“${line}” 형식에 | 와 점수를 넣어주세요.`);
+        const raw=rest.join('|').trim();
+        if(raw!=='특수' && !Number.isFinite(Number(raw))) throw new Error(`“${line}”의 점수는 숫자 또는 특수여야 해요.`);
+        add(word,raw==='특수'?'특수':-Math.abs(Number(raw)));
+      }
+    } else if(mode==='keywords') {
+      for(const line of lines) {
+        const [word,...rest]=line.split('|');
+        const raw=rest.join('|').trim();
+        if(raw && raw!=='특수' && !Number.isFinite(Number(raw))) throw new Error(`“${line}”의 점수 형식을 확인해주세요.`);
+        add(word,raw==='특수'?'특수':(raw?-Math.abs(Number(raw)):-1));
+      }
+    } else {
+      for(const chunk of splitRuleChunks(text)) {
+        if(mode==='auto') {
+          if(chunk.includes('|')) {
+            const [word,...rest]=chunk.split('|'); const raw=rest.join('|').trim();
+            if(raw==='특수'||Number.isFinite(Number(raw))) add(word,raw==='특수'?'특수':-Math.abs(Number(raw)));
+            continue;
+          }
+          const pair=chunk.match(/^\s*(?:\d+[.)、]\s*)?(.+?)\s*(?:[:：=]\s*|\(\s*)(?:벌점\s*)?(-?\d+)\s*점?\s*\)?\s*$/);
+          if(pair) { add(pair[1].trim(),-Math.abs(Number(pair[2]))); continue; }
+        }
+        const word=extractRuleWord(chunk), value=extractRuleScore(chunk);
+        add(word,value);
+      }
+    }
+    if(!parsed.length) throw new Error('인식된 항목이 없어요. 교칙 문장이나 키워드를 입력해주세요.');
+    return parsed;
+  }
+  function renderEntryEditor(items) {
+    const host=$('entryEditor'); host.innerHTML='';
+    if(!items.length) { host.innerHTML='<div class="entry-empty">인식된 항목이 없습니다.</div>'; return; }
+    items.forEach((entry,index)=>{
+      const row=document.createElement('div'); row.className='entry-row';
+      const thumb=document.createElement('div'); thumb.className='entry-thumb';
+      if(entry.imageData) { const img=document.createElement('img');img.alt='괴물 이미지 미리보기';img.src=entry.imageData;thumb.appendChild(img); }
+      else thumb.textContent='이미지 없음';
+      const name=document.createElement('input'); name.type='text'; name.value=entry.word; name.setAttribute('aria-label','괴물 키워드');
+      name.addEventListener('input',()=>{items[index].word=name.value.trim();});
+      const scoreInput=document.createElement('input'); scoreInput.type='text';scoreInput.value=entry.value==='특수'?'특수':String(Math.abs(Number(entry.value)||0));scoreInput.title='숫자 또는 특수';scoreInput.setAttribute('aria-label','벌점 또는 특수');
+      scoreInput.addEventListener('change',()=>{const v=scoreInput.value.trim();items[index].value=(v==='특수'||items[index].word==='퇴사')?'특수':-Math.abs(Number(v)||0);scoreInput.value=items[index].value==='특수'?'특수':String(Math.abs(items[index].value));});
+      const uploadLabel=document.createElement('label');uploadLabel.className='file-label';uploadLabel.textContent='이미지 넣기';
+      const file=document.createElement('input');file.type='file';file.accept='image/*';
+      file.addEventListener('change',async()=>{
+        const f=file.files?.[0];if(!f)return;
+        if(!f.type.startsWith('image/')) {showToast('이미지 파일만 넣을 수 있어요.');return;}
+        if(f.size>15*1024*1024) {showToast('15MB 이하의 이미지를 선택해주세요.');return;}
+        try {
+          const data=await compressImage(f);items[index].imageData=data;
+          thumb.innerHTML='';const img=document.createElement('img');img.alt='괴물 이미지 미리보기';img.src=data;thumb.appendChild(img);
+          showToast(`${items[index].word} 이미지 등록 완료`);
+        } catch(err) {console.error(err);showToast('이미지를 읽지 못했어요. 다른 파일을 선택해주세요.');}
+      });
+      uploadLabel.appendChild(file);
+      const remove=document.createElement('button');remove.type='button';remove.textContent='이미지 삭제';
+      remove.addEventListener('click',()=>{items[index].imageData='';thumb.textContent='이미지 없음';});
+      row.append(thumb,name,scoreInput,uploadLabel,remove);host.appendChild(row);
+    });
+  }
+  function compressImage(file) {
+    return new Promise((resolve,reject)=>{
+      const url=URL.createObjectURL(file),img=new Image();
+      img.onload=()=>{
+        try {
+          const max=420,scale=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
+          const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
+          const c=canvas.getContext('2d');c.drawImage(img,0,0,canvas.width,canvas.height);
+          const data=canvas.toDataURL('image/webp',.82);URL.revokeObjectURL(url);resolve(data);
+        } catch(e) {URL.revokeObjectURL(url);reject(e);}
+      };
+      img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('image load failed'));};img.src=url;
+    });
+  }
+  $('analyzeBtn').addEventListener('click',()=>{
+    try {
+      const parsed=parsePenaltyText();
+      renderEntryEditor(parsed);
+      $('entryEditor')._items=parsed;
+      $('entryEditor').dataset.sourceText=$('penaltyList').value;
+      $('entryEditor').dataset.sourceMode=$('inputMode').value;
+      $('parseSummary').textContent=`총 ${parsed.length}개 항목 인식 완료 · 이름과 점수를 확인하고, 각 항목에 이미지를 넣은 뒤 저장하세요.`;
+    } catch(err) { $('parseSummary').textContent=err.message; }
+  });
+  $('settingsBtn').addEventListener('click',()=>openSettings(running?'game':(gameOver?'over':'start')));
+  $('startSettingsBtn').addEventListener('click',()=>{$('startOverlay').classList.add('hidden');openSettings('start');});
+  $('overSettingsBtn').addEventListener('click',()=>{$('overOverlay').classList.add('hidden');openSettings('over');});
+  $('cancelSettingsBtn').addEventListener('click',closeSettings);
+  $('saveSettingsBtn').addEventListener('click',()=>{
+    let parsed;
+    try {
+      const editor=$('entryEditor');
+      const sourceChanged=editor.dataset.sourceText!==$('penaltyList').value || editor.dataset.sourceMode!==$('inputMode').value;
+      const typed=sourceChanged ? parsePenaltyText() : editor._items;
+      parsed=(typed && typed.length ? typed : parsePenaltyText()).map(e=>({word:String(e.word||'').trim(),value:e.value==='특수'||e.word==='퇴사'?'특수':-Math.abs(Number(e.value)||0),imageData:e.imageData||''})).filter(e=>e.word);
+      if(!parsed.length) throw new Error('괴물 항목을 한 개 이상 등록해주세요.');
+      if(new Set(parsed.map(e=>e.word)).size!==parsed.length) throw new Error('같은 괴물 이름이 중복되어 있어요. 이름을 다르게 바꿔주세요.');
+    } catch(err) { $('parseSummary').textContent=err.message; return; }
+    entries=parsed;
+    const saved=saveEntriesToBrowser();
+    closeSettings();
+    showToast(saved?'교칙과 괴물 이미지가 이 브라우저에 저장됐어요!':'설정은 적용됐지만 브라우저 저장 공간이 부족해 이미지 일부가 새로고침 후 사라질 수 있어요.');
+  });
+  $('startBtn').addEventListener('click',startGame);
+  $('restartBtn').addEventListener('click',startGame);
+  $('pauseBtn').addEventListener('click',togglePause);
+  $('resumeBtn').addEventListener('click',togglePause);
+
+  // Initial static scene
+  draw(); updateHud();
+})();
+</script>
+</body>
+</html>
